@@ -1,2 +1,10 @@
 # tec-RANDOM
-TEC-1 avalanche diode random number generator
+## hw
+- avalanche diode 
+- back to back PNP
+- 
+
+## sw
+- celluar automata, eg rule 30
+- 
+- 
