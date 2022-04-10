@@ -10,7 +10,7 @@
 - https://mathworld.wolfram.com/CellularAutomaton.html
 
 - https://www.math.utah.edu/~alfeld/Random/Random.html
--```
+```
 :A 7 x@ * 3 + " x! 32555 > (`_`)(`|`);
 :B 10000(A);
 ```
