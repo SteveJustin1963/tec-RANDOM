@@ -12,7 +12,7 @@
 - https://www.math.utah.edu/~alfeld/Random/Random.html
 - https://svijaykoushik.github.io/blog/2019/10/04/three-awesome-ways-to-generate-random-number-in-javascript/
 
-### code
+### MINT code
 ```
 :A 7 x@ * 3 + " x! 32555 > (`_`)(`|`);
 :B 10000(A);
