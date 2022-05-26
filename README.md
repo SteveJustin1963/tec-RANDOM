@@ -8,9 +8,9 @@
 - rule 30 https://en.wikipedia.org/wiki/Rule_30
 - https://en.wikipedia.org/wiki/Elementary_cellular_automaton
 - https://mathworld.wolfram.com/CellularAutomaton.html
-
 - https://www.math.utah.edu/~alfeld/Random/Random.html
 - https://svijaykoushik.github.io/blog/2019/10/04/three-awesome-ways-to-generate-random-number-in-javascript/
+
 
 ### MINT code
 ```
