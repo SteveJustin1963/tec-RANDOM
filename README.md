@@ -14,7 +14,8 @@
 
 ### MINT code
 ```
-:A 7 x@ * 3 + " x! 32555 > (`_`)(`|`);
+// mint 2.0
+:A 7 x * 3 + " x! 32555 > (`_`) /E (`|`);
 :B 10000(A);
 ```
 ![](https://github.com/SteveJustin1963/tec-RANDOM/blob/master/Pics/out.png) 
