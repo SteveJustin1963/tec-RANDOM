@@ -24,7 +24,7 @@
 
 ## analyzer for PRNG 
 
-1. Integrates your original PRNG (:A function)
+1. Integrates PRNG (:A function)
 2. Adds comprehensive analysis:
    - Ones/Zeros distribution
    - Run length analysis
@@ -43,7 +43,7 @@
    - Run length patterns
    - Statistical deviation
 
-To use it:
+To use:
 1. Just run the M function:
 ```mint
 M
