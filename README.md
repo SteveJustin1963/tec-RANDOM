@@ -1,4 +1,8 @@
 # tec-RANDOM
+
+![image](https://github.com/user-attachments/assets/6aeeeb65-7aea-4baa-918d-274110d2e5c7)
+
+
 ### hw
 - avalanche diode 
 - back to back PNP
