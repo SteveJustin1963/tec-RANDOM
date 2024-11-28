@@ -4,9 +4,19 @@
 
 
 ### hw
-- avalanche diode 
+- avalanche diode
+
+![image](https://github.com/user-attachments/assets/69a8e34a-8691-4e02-8b8d-50d4ec015fa6)
+
 - back to back PNP
-- 
+
+![image](https://github.com/user-attachments/assets/3a32faad-976f-4aa8-af45-2da9d48f40b1)
+
+- 555
+
+![image](https://github.com/user-attachments/assets/b3e00cb7-73ce-48cd-ad3b-4df04e27b0e1)
+
+
 
 ### sw
 - rule 30 https://en.wikipedia.org/wiki/Rule_30
