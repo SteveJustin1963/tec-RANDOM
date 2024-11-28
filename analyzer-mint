@@ -1,0 +1,117 @@
+// PRNG Analysis System with Generator
+// System Variables
+0 s!  // Sum for mean calculation
+0 q!  // Sum for variance calculation
+0 z!  // Zero count
+0 o!  // One count
+0 r!  // Current run length
+0 l!  // Longest run
+0 c!  // Cycle counter
+0 p!  // Previous value
+[ 0 0 0 0 0 0 0 0 0 0 ] d! // Distribution bins
+
+// Original PRNG
+:A 
+    7 x * 3 + " x!    // Generate next number
+    32555 > 
+    (`_`) /E (`|`)    // Output symbol
+    // Analyze the value
+    x 32555 > y!      // Store binary result (0 or 1)
+    
+    // Update statistics
+    y (
+        1 o +!        // Count ones
+    ) /E (
+        1 z +!        // Count zeros
+    )
+    
+    // Track runs
+    y p = (
+        1 r +!        // Increment current run
+        r l > (
+            r l!      // Update longest run if needed
+        )
+    ) /E (
+        0 r!          // Reset run counter
+    )
+    
+    // Update distribution bins
+    x 6553 / d       // Map value to bin 0-9
+    " 1+ $           // Increment bin count
+    d $ ?!           // Store updated count
+    
+    y p!             // Store current as previous
+    
+    // Periodic reporting
+    1 c +!           // Increment counter
+    c 1000 = (       // Every 1000 iterations
+        R            // Generate report
+        0 c!         // Reset counter
+    )
+;
+
+// Statistical Report Generator
+:R
+    `
+PRNG Analysis Report - Iteration: ` x . `
+----------------------------------------
+Distribution Analysis:
+    Ones/Zeros Ratio: ` o . `/` z . `
+    Bias Score: ` o z - . `
+    
+Run Length Analysis:
+    Longest Run: ` l . `
+    
+Value Distribution:
+    Bin 0: ` d 0? . `
+    Bin 1: ` d 1? . `
+    Bin 2: ` d 2? . `
+    Bin 3: ` d 3? . `
+    Bin 4: ` d 4? . `
+    Bin 5: ` d 5? . `
+    Bin 6: ` d 6? . `
+    Bin 7: ` d 7? . `
+    Bin 8: ` d 8? . `
+    Bin 9: ` d 9? . `
+
+Chi-Square Estimate: ` 
+    // Calculate rough chi-square
+    0 t!  // Initialize total
+    10(    // For each bin
+        d /i ? 100 - " *  // (observed - expected)^2
+        t + t!            // Sum up
+    )
+    t 100 / .            // Scale and display
+`
+
+Randomness Score: `
+    // Calculate basic randomness score (0-100)
+    // Based on distribution evenness and run length
+    100 t!               // Start at 100
+    o z - -1 * 2 * t -! // Subtract bias penalty
+    l 5 > (             // Penalize long runs
+        l 5 - 10 * t -! // 10 points per excessive run
+    )
+    t 0 < (
+        0 t!            // Minimum score is 0
+    )
+    t .
+/N
+;
+
+// Main test loop
+:M
+    `PRNG Analysis Starting
+    ---------------------` /N
+    10000(             // Run 10000 iterations
+        A              // Generate and analyze
+    )
+    `
+Final Analysis Complete
+---------------------` /N
+    R                  // Final report
+;
+
+// Initialize and run
+M
+
