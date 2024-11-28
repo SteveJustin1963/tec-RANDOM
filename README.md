@@ -61,11 +61,19 @@ The analysis includes:
 - Chi-square approximation
 - Overall randomness score
 
-todo:
-1. additional statistical tests
-2. reporting frequency
-3. scoring system
-4. more detailed analysis in an area
-   
+
+## result of analysis
+- matlab code test
+
+![image](https://github.com/user-attachments/assets/15522533-46a8-4c5f-8fbb-900a1a035393)
+
+  Serial Correlation: -1.988
+Randomness Metrics:
+    Distribution Bias Penalty: 0.18
+    Autocorrelation Penalty: 6.56
+    Chi-square Penalty: 20.00
+    Entropy Penalty: 0.00
+Overall Randomness Score: 73.26/100
+
 
  
