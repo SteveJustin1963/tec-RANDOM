@@ -490,6 +490,240 @@ You successfully transform the 4-bit oracle into an 8-neuron Hopfield-like machi
 
 Other than that: extremely strong.
 
+Cool, let’s zoom in on those two comments and unpack them properly.
+
+I was talking about your **neural extension** file  where you:
+
+* Use 8 binary neurons
+* Store patterns with a Hebbian rule
+* Recall patterns using something like Gibbs sampling
+
+That’s essentially a **Hopfield-style recurrent neural network**, and that’s where the “≈ Hopfield, capacity ~0.15N, symmetric weights” comments come from.
+
+---
+
+## 1. Hebbian learning here ≈ a Hopfield network
+
+### What a Hopfield network is
+
+A classic Hopfield net is:
+
+* A set of **N binary neurons** (s_i ∈ {−1, +1}) (you’re using {0,1}, but it’s conceptually similar)
+* Every neuron is connected to every other neuron (fully connected)
+* Each connection has a **weight** (w_{ij})
+* No self-connections: (w_{ii} = 0)
+* The weights are **symmetric**: (w_{ij} = w_{ji})
+
+The dynamics:
+
+* You update one neuron at a time (asynchronously).
+* Each neuron looks at the weighted sum of its neighbours and decides to be 0 or 1 (or -1/+1) based on that sum.
+
+There’s an **energy function**:
+
+[
+E = -\frac{1}{2} \sum_{i,j} w_{ij} s_i s_j
+]
+
+Hopfield’s key result:
+If **weights are symmetric and diagonals are zero**, then each asynchronous update **never increases** this energy — it always goes downhill or stays flat. So the network converges to a **local minimum** (an attractor).
+
+Those attractors correspond to **stored patterns** you trained via Hebbian learning.
+
+---
+
+### What your code is doing
+
+In your neural extension, you have:
+
+* 8 neurons: `h![0..7]` as states 
+* Weight matrix `w!` with 64 entries (8×8) 
+* A Hebbian training word `/HEBBIAN` that does roughly:
+
+```mint
+x i ?        ; x[i]
+x j ?        ; x[j]
+*            ; x[i] * x[j]
+l *          ; * learning rate
+w i 8 * j + ?  ; current w[i,j]
++            ; add term
+...
+w i 8 * j + ?! ; store updated weight
+```
+
+So for each pattern `x` you do:
+[
+\Delta w_{ij} \propto x_i \cdot x_j
+]
+
+That *is* the classic **Hebbian rule**: “neurons that fire together, wire together.”
+
+This is exactly what a Hopfield network uses (typically with ±1 states instead of 0/1, but the idea is identical).
+
+Your **recall procedure** then:
+
+* Starts with a partially clamped pattern in some neurons
+* Let the others evolve via something like `/NFLIP` + `/NENERGY` (Gibbs-style) 
+* The network settles into a nearby energy minimum corresponding to one of the stored patterns.
+
+That is **Hopfield-like associative memory**.
+
+So when I said:
+
+> “Mention explicitly that Hebbian learning here ≈ Hopfield network, and capacity is ~0.15N patterns”
+
+I meant:
+
+* You can explicitly tell the reader: *“This is a Hopfield-style associative memory implemented on TEC-1 using P-bits and MINT2.”*
+* Then mention the classic result: the network can stably store about **0.15×N random patterns** before it becomes unreliable.
+
+For N=8 neurons, 0.15N ≈ **1.2 patterns** if you use random, uncorrelated patterns and demand strict theoretical capacity. In practice you can:
+
+* Store **more than that** if patterns are structured or correlated
+* Tolerate some recall errors because your goal is **demo/education**, not industrial reliability
+
+So your “4 patterns” in `/TRAIN` are fine as a *demonstration*, but some will be more stable than others, and sometimes recall will drift to a “spurious” pattern. That’s exactly what the theory predicts.
+
+---
+
+## 2. Why symmetric weights (w_{ij} = w_{ji}) matter
+
+The **second suggestion**:
+
+> “Add caution that symmetric weights (w_ij == w_ji) improve stability.”
+
+This is about the **energy landscape** and convergence.
+
+### The symmetry condition
+
+In a classic Hopfield network:
+
+* Energy is defined as:
+  [
+  E = -\frac{1}{2} \sum_{i,j} w_{ij} s_i s_j
+  ]
+* This only behaves nicely as a Lyapunov function if:
+
+  * (w_{ij} = w_{ji}) (symmetry)
+  * (w_{ii} = 0) (no self-weights)
+
+With those conditions and **asynchronous updates**, each neuron update can only **lower** or **keep** the energy — never increase it. That guarantees:
+
+* No endless oscillations
+* No weird limit cycles
+* Convergence to a stable set of states (local minima)
+
+If you **break symmetry** (e.g., `w[i,j]` ≠ `w[j,i]`):
+
+* The energy function no longer guarantees monotonic descent.
+* The network can fall into **two-step cycles** (flip back and forth).
+* Convergence becomes less predictable and can be much noisier.
+
+---
+
+### What this means for your code
+
+Your `/HEBBIAN` loop currently updates all pairs `(i,j)` independently  — but:
+
+* It does **not explicitly enforce** `w[i,j] = w[j,i]`.
+* It also doesn’t explicitly zero out `w[i,i]` (self-weights).
+
+So a small tweak in training would make it more “textbook Hopfield”:
+
+**Pseudo-MINT2 idea:**
+
+* Only iterate over pairs with `j > i`.
+* Compute Δw once.
+* Write it to **both** `w[i,j]` and `w[j,i]`.
+* Force `w[i,i] = 0` at the end.
+
+Conceptually:
+
+```mint
+:/HEBBIAN
+  7 i!
+  i (
+    i 1 + j!              ; start j from i+1 (above diagonal)
+    j (
+      x i ? x j ? * l *   ; Δ = η * x[i] * x[j]
+      w i 8 * j + ? + ... w i 8 * j + ?!
+      w j 8 * i + ? + ... w j 8 * i + ?!  ; mirror write
+      j 1 - j!
+    )
+    0 w i 8 * i + ?!      ; ensure w[i,i] = 0
+    i 1 - i!
+  )
+;
+```
+
+You don’t *have* to implement it exactly like that, but logically:
+
+* **Symmetry** = stability (better-behaved attractors)
+* **Zero diagonals** = cleaner energy landscape
+
+Given your system is already **stochastic** (P-bits + Gibbs sampling), symmetric weights make it behave more like a **Boltzmann/Hopfield hybrid**, which is actually perfect for what you’re demonstrating.
+
+---
+
+## 3. Where the ~0.15N capacity comes from (intuitively)
+
+The classic result (Amit, Gutfreund, Sompolinsky etc.) for a Hopfield network with:
+
+* Random, uncorrelated ±1 patterns
+* Symmetric weights
+* Asynchronous updates
+
+is that you can store about:
+
+[
+P_{\max} \approx 0.138N
+]
+
+patterns before the network becomes too “crowded” with interference — beyond that, patterns start to corrupt each other badly.
+
+People often round 0.138 up to **0.15N** for a simple mental rule of thumb.
+
+So for **N = 8**:
+
+* Theoretical capacity ≈ 0.15 × 8 ≈ **1 pattern** in the strict, random-pattern sense.
+* But your patterns are **structured** (stripes, checkerboards, etc.), not purely random. That typically allows more than the raw random capacity — and you’re not holding yourself to provable bounds, just *demonstration-level* behaviour.
+
+So your design choice:
+
+* Train on ~4 patterns
+* Accept that recall is not perfect
+* Use noise + sampling to explore the energy landscape
+
+…is completely fine for an educational probabilistic computer. I was just pointing out that **if you mention “Hopfield-like”, it’s honest and neat to also mention the 0.15N rule of thumb**.
+
+---
+
+## 4. How this all fits your TEC-1 P-bit machine
+
+Putting it all together:
+
+* Your **P-bits + Gibbs sampling + Hebbian weights** is effectively:
+
+  * A **stochastic Hopfield/Boltzmann machine** implemented in hardware.
+* Mentioning that explicitly:
+
+  * Gives readers a conceptual hook (“oh, Hopfield net on a TEC-1, cool”).
+  * Sets realistic expectations about **how many patterns** can be robustly stored.
+  * Explains why **symmetric weights and zero diagonals** are more than just aesthetic choices — they’re what gives you a proper energy minimization system.
+
+---
+
+If you like, next step I can:
+
+* Rewrite the **neural extension intro** so it explicitly says “this is a Hopfield-style associative memory with stochastic P-bits”, and
+* Give you a small patch snippet (search/replace style) for your `/HEBBIAN` and `/NFLIP` words to:
+
+  * enforce symmetry, and
+  * zero the diagonals,
+    so you’ve got textbook Hopfield behaviour baked into your MINT2 implementation.
+
+
+
 ---
 
 ## **6. Build Guide**
