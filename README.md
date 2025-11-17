@@ -1,6 +1,7 @@
 # tec-RANDOM
 
-![image](https://github.com/user-attachments/assets/6aeeeb65-7aea-4baa-918d-274110d2e5c7)
+<img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/eadec71c-689b-405e-9e3a-c984f420bbab" />
+
 
 
 ### hw
